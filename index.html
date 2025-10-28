@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detector CREMAA</title>
+    <style>
+        :root {
+            --primary-color: #FF5900; /* Naranja Anáhuac */
+            --secondary-color: #f2f2f2;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --light-text: #ffffff;
+            --dark-text: #6B3F23; /* Café Anáhuac */
+            --border-radius: 8px;
+            --box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--dark-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--light-text);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1, h2 {
+            margin: 0;
+        }
+
+        h2 {
+            color: var(--dark-text);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        #start-screen p {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 12px 25px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            background-color: #d94b00; /* Naranja más oscuro para hover */
+        }
+        
+        .button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        #quiz-screen {
+            display: none;
+        }
+
+        #progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 10px;
+            background-color: var(--primary-color);
+            border-radius: var(--border-radius);
+            transition: width 0.3s ease;
+        }
+        
+        #quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #question-counter {
+            font-weight: bold;
+        }
+
+        #timer {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #question-prompt {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        #indicator-text {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin: 0 0 30px 0;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #343a40;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        .answer-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .answer-btn {
+            width: 120px;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            border: 2px solid;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        
+        .answer-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        #yes-btn {
+            background-color: var(--correct-color);
+            border-color: var(--correct-color);
+            color: var(--light-text);
+        }
+
+        #no-btn {
+            background-color: var(--incorrect-color);
+            border-color: var(--incorrect-color);
+            color: var(--light-text);
+        }
+
+        #results-screen {
+            display: none;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--secondary-color);
+        }
+        
+        td:nth-child(2) {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #final-message {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        /* Feedback Modal Styles */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--light-text);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        #feedback-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        #feedback-title.correct {
+            color: var(--correct-color);
+        }
+
+        #feedback-title.incorrect {
+            color: var(--incorrect-color);
+        }
+
+        #feedback-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Detector CREMAA</h1>
+        </div>
+        <div class="content">
+            <!-- Pantalla de Inicio -->
+            <div id="start-screen">
+                <h2>¡Bienvenido al Detector CREMAA!</h2>
+                <p>A continuación, evaluará 30 indicadores. Su tarea es determinar si el indicador cumple con los <strong>criterios mínimos de calidad CREMAA</strong> (Claridad, Relevancia, Economía, Monitoreable, Aportación Marginal, Adecuado).</p>
+                <p>Seleccione <strong>SÍ</strong> o <strong>NO</strong> para cada pregunta. Después de responder, recibirá retroalimentación inmediata.</p>
+                <button class="button" id="start-btn">Comenzar Evaluación</button>
+            </div>
+
+            <!-- Pantalla del Cuestionario -->
+            <div id="quiz-screen">
+                <div id="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+                <div id="quiz-header">
+                    <span id="question-counter"></span>
+                    <div id="timer"></div>
+                </div>
+                <p id="question-prompt">¿Este indicador cumple con los criterios CREMAA?</p>
+                <blockquote id="indicator-text"></blockquote>
+                <div class="answer-buttons">
+                    <button class="answer-btn" id="yes-btn">SÍ</button>
+                    <button class="answer-btn" id="no-btn">NO</button>
+                </div>
+            </div>
+
+            <!-- Pantalla de Resultados -->
+            <div id="results-screen">
+                <h2>Resultados de la Evaluación</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Métrica</th>
+                            <th>Valor Mostrado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Precisión Global</td>
+                            <td id="accuracy"></td>
+                        </tr>
+                        <tr>
+                            <td>Tiempo Promedio por Pregunta</td>
+                            <td id="avg-time"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Análisis de Desempeño por Dimensión</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dimensión Crítica</th>
+                            <th>Desempeño</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Claridad y Adecuación</td>
+                            <td id="clarity-score"></td>
+                        </tr>
+                        <tr>
+                            <td>Relevancia y Aportación Marginal</td>
+                            <td id="relevance-score"></td>
+                        </tr>
+                        <tr>
+                            <td>Monitoreable y Economía</td>
+                            <td id="monitoring-score"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="final-message"></div>
+                <button class="button" id="restart-btn">Volver a Intentar</button>
+            </div>
+        </div>
+        
+        <!-- Feedback Modal -->
+        <div id="feedback-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 id="feedback-title"></h3>
+                <p id="feedback-text"></p>
+                <button id="next-question-btn" class="button">Siguiente</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const questions = [
+            { id: 1, indicator: "Porcentaje de promotores comunitarios capacitados sobre prevención de dengue, con base en asistencia registrada.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. El indicador es medible con registros de asistencia, claro, relevante y útil para monitorear el proceso." },
+            { id: 2, indicator: "Número de folletos impresos sobre enfermedades transmitidas por vector.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Mide un producto (folletos) y no refleja una acción significativa o resultado en la comunidad. Le falta relevancia y aportación sustantiva." },
+            { id: 3, indicator: "Porcentaje de personas que consideran que su comunidad es más saludable desde hace un año.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. Es ambiguo (‘más saludable’ no está claramente definido) y difícil de medir de manera objetiva (falta de claridad y monitoreabilidad)." },
+            { id: 4, indicator: "Porcentaje de embarazadas que reciben al menos una consulta prenatal en su primer trimestre, según registros de unidades de salud.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es un indicador claro, relevante y medible. Usa registros existentes y se relaciona directamente con acciones clave en salud materna." },
+            { id: 5, indicator: "Porcentaje de habitantes satisfechos con los servicios de salud, medido en una encuesta cada 5 años.", correctAnswer: 'NO', dimension: 'Monitoreable y Economía', feedback: "CORRECTO. La medición cada 5 años no permite un monitoreo útil (falta de monitoreabilidad). Además, la satisfacción necesita una definición clara." },
+            { id: 6, indicator: "Porcentaje de niños menores de 5 años con esquema de vacunación completo, registrado en cartillas de salud.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es claro, relevante, fácil de medir a partir de registros existentes y útil para monitorear el cumplimiento de una meta de salud pública." },
+            { id: 7, indicator: "Proporción de adultos con diagnóstico reciente de diabetes que reciben atención médica mensual, según registros clínicos.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es específico, medible y relevante. Permite conocer el seguimiento clínico de una población prioritaria con base en datos disponibles." },
+            { id: 8, indicator: "Número de llamadas recibidas en la línea de atención ciudadana.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. No distingue si las llamadas están relacionadas con el programa, ni qué tipo de atención se dio. Le falta claridad y relevancia." },
+            { id: 9, indicator: "Porcentaje de hogares con acceso a internet de banda ancha en la cabecera municipal, según censo poblacional anual.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es un indicador claro, relevante para medir infraestructura, y monitoreable mediante una fuente anual existente (económico)." },
+            { id: 10, indicator: "Número de árboles plantados en el año fiscal.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Mide solo una actividad y no el resultado (supervivencia o impacto ambiental). Le falta relevancia y aportación marginal." },
+            { id: 11, indicator: "Tasa de mortalidad infantil por cada mil nacidos vivos, según datos del Registro Civil.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Indicador estándar, claro, relevante y medible con fuentes oficiales existentes (económico y monitoreable)." },
+            { id: 12, indicator: "Grado de satisfacción de los empleados con el clima laboral.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. 'Grado de satisfacción' es un concepto muy ambiguo y subjetivo. No es adecuado sin una escala o metodología de medición clara." },
+            { id: 13, indicator: "Porcentaje de proyectos completados a tiempo y dentro del presupuesto.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es claro, relevante para la gestión y totalmente monitoreable con registros de gestión de proyectos." },
+            { id: 14, indicator: "Cantidad de capacitaciones realizadas al personal.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Mide solo el esfuerzo (cantidad de eventos) y no el resultado (conocimiento adquirido o aplicación). No es relevante para medir el impacto real." },
+            { id: 15, indicator: "Porcentaje de carreteras estatales en buenas condiciones de pavimento.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es claro, relevante para infraestructura pública y monitoreable si se define 'buenas condiciones' con criterios técnicos claros." },
+            { id: 16, indicator: "Número de veces que se accede a la página web institucional.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Falta relevancia. El número de clics es una métrica de vanidad que no informa si la página cumplió su objetivo." },
+            { id: 17, indicator: "Proporción de quejas ciudadanas resueltas satisfactoriamente en el primer contacto.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Claro, relevante (mide la eficiencia y calidad del servicio), y monitoreable con registros de atención ciudadana." },
+            { id: 18, indicator: "Porcentaje de alumnos que mejoraron su calidad educativa.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. El término 'calidad educativa' es demasiado abstracto y ambiguo. No es adecuado ni monitoreable sin variables operacionales definidas." },
+            { id: 19, indicator: "Costo promedio de energía eléctrica por oficina administrativa, según recibos mensuales.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es muy económico (usa datos existentes), claro, y relevante para monitorear la eficiencia en el gasto operativo." },
+            { id: 20, indicator: "Porcentaje de población que considera que la ciudad es mejor que antes.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. Muy subjetivo y ambiguo ('mejor que antes'). No es claro ni adecuado porque el concepto de 'mejor' varía entre personas." },
+            { id: 21, indicator: "Proporción de expedientes de obra pública que se completan sin errores u observaciones, según auditoría interna.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Es claro, relevante para la transparencia y eficiencia administrativa, y monitoreable a partir de los resultados de la auditoría." },
+            { id: 22, indicator: "Número de reuniones del comité de seguimiento del proyecto.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Mide una actividad de bajo nivel sin aportar valor sobre el avance o la toma de decisiones. No tiene aportación marginal útil." },
+            { id: 23, indicator: "Promedio de días transcurridos para la autorización de licencias de construcción.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Claro, relevante para medir la eficiencia de un trámite gubernamental y fácilmente monitoreable con los registros de inicio y fin del proceso." },
+            { id: 24, indicator: "Porcentaje de la población cubierta por servicios de agua potable que cumple con normas de calidad, según análisis de laboratorio.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Claro, relevante para la salud pública y monitoreable con pruebas estandarizadas (análisis de laboratorio)." },
+            { id: 25, indicator: "Nivel de compromiso de los colaboradores.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. El 'Nivel de compromiso' es un constructo abstracto que carece de claridad y adecuación si no se define operacionalmente." },
+            { id: 26, indicator: "Monto total gastado en publicidad.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Es económico (fácil de obtener), pero no es relevante para medir el efecto de la publicidad (impacto, alcance o cambio de comportamiento)." },
+            { id: 27, indicator: "Porcentaje de uso de equipos tecnológicos en las escuelas.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. Falta claridad. El 'uso' es ambiguo (¿encendido, uso didáctico, por alumno/hora?). No es monitoreable de manera consistente." },
+            { id: 28, indicator: "Porcentaje de instituciones educativas con acceso a bibliotecas digitales.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Claro y monitoreable a través de registros de suscripción/acceso. Es relevante para medir el acceso a recursos de aprendizaje." },
+            { id: 29, indicator: "Proporción de vehículos oficiales que cumplieron con su programa de mantenimiento preventivo, según bitácoras.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. Claro, relevante para la gestión de activos y monitoreable de manera económica a partir de las bitácoras internas." },
+            { id: 30, indicator: "Porcentaje de población juvenil que percibe una mejora en sus oportunidades de empleo en el último semestre.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. La percepción es un concepto difícil de medir y muy subjetivo. No es claro ni adecuado sin una metodología de encuesta sólida y bien definida." }
+        ];
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const feedbackModal = document.getElementById('feedback-modal');
+
+        const startBtn = document.getElementById('start-btn');
+        const yesBtn = document.getElementById('yes-btn');
+        const noBtn = document.getElementById('no-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+
+        const questionCounterEl = document.getElementById('question-counter');
+        const timerEl = document.getElementById('timer');
+        const indicatorTextEl = document.getElementById('indicator-text');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const feedbackTitleEl = document.getElementById('feedback-title');
+        const feedbackTextEl = document.getElementById('feedback-text');
+
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let timerInterval;
+        let questionStartTime;
+        let totalTime = 0;
+
+        startBtn.addEventListener('click', startQuiz);
+        yesBtn.addEventListener('click', () => selectAnswer('SÍ'));
+        noBtn.addEventListener('click', () => selectAnswer('NO'));
+        restartBtn.addEventListener('click', restartQuiz);
+        nextQuestionBtn.addEventListener('click', nextQuestion);
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            totalTime = 0;
+            startScreen.style.display = 'none';
+            resultsScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            clearInterval(timerInterval);
+            const question = questions[currentQuestionIndex];
+            questionCounterEl.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            indicatorTextEl.textContent = question.indicator;
+            progressBar.style.width = `${((currentQuestionIndex) / questions.length) * 100}%`;
+            
+            let timeLeft = 30;
+            timerEl.textContent = `${timeLeft}s`;
+            timerEl.style.color = 'var(--primary-color)';
+            
+            questionStartTime = Date.now();
+            
+            yesBtn.disabled = false;
+            noBtn.disabled = false;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = `${timeLeft}s`;
+                if (timeLeft <= 5) {
+                    timerEl.style.color = 'var(--incorrect-color)';
+                }
+                if (timeLeft <= 0) {
+                    selectAnswer(null); // Timeout counts as a wrong answer
+                }
+            }, 1000);
+        }
+
+        function selectAnswer(answer) {
+            clearInterval(timerInterval);
+            const timeTaken = (Date.now() - questionStartTime) / 1000;
+            totalTime += timeTaken;
+
+            yesBtn.disabled = true;
+            noBtn.disabled = true;
+
+            const question = questions[currentQuestionIndex];
+            const isCorrect = answer === question.correctAnswer;
+
+            userAnswers.push({
+                questionId: question.id,
+                answer: answer,
+                isCorrect: isCorrect,
+                dimension: question.dimension
+            });
+
+            showFeedback(isCorrect, question);
+        }
+
+        function showFeedback(isCorrect, question) {
+            if (isCorrect) {
+                feedbackTitleEl.textContent = "¡Correcto!";
+                feedbackTitleEl.className = 'correct';
+            } else {
+                feedbackTitleEl.textContent = "Incorrecto";
+                feedbackTitleEl.className = 'incorrect';
+            }
+            
+            let feedbackMsg = question.feedback;
+            if (!isCorrect) {
+                feedbackMsg = `La respuesta correcta era **${question.correctAnswer}**. ${question.feedback.replace('CORRECTO. ', '')}`;
+            }
+            feedbackTextEl.innerHTML = feedbackMsg;
+
+            feedbackModal.style.display = 'flex';
+        }
+
+        function nextQuestion() {
+            feedbackModal.style.display = 'none';
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            progressBar.style.width = '100%';
+            quizScreen.style.display = 'none';
+            resultsScreen.style.display = 'block';
+
+            const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
+            const accuracy = (correctAnswers / questions.length) * 100;
+            const avgTime = totalTime / questions.length;
+
+            document.getElementById('accuracy').textContent = `${accuracy.toFixed(1)}% (${correctAnswers}/${questions.length})`;
+            document.getElementById('avg-time').textContent = `${avgTime.toFixed(1)} segundos`;
+
+            const dimensions = ['Claridad y Adecuación', 'Relevancia y Aportación Marginal', 'Monitoreable y Economía'];
+            const dimensionScores = {};
+
+            dimensions.forEach(dim => {
+                const dimQuestions = questions.filter(q => q.dimension === dim);
+                const dimAnswers = userAnswers.filter(a => a.dimension === dim);
+                const correctDimAnswers = dimAnswers.filter(a => a.isCorrect).length;
+                const score = dimQuestions.length > 0 ? (correctDimAnswers / dimQuestions.length) * 100 : 100;
+                dimensionScores[dim] = score;
+            });
+
+            document.getElementById('clarity-score').textContent = `${dimensionScores['Claridad y Adecuación'].toFixed(1)}%`;
+            document.getElementById('relevance-score').textContent = `${dimensionScores['Relevancia y Aportación Marginal'].toFixed(1)}%`;
+            document.getElementById('monitoring-score').textContent = `${dimensionScores['Monitoreable y Economía'].toFixed(1)}%`;
+
+            const finalMessageEl = document.getElementById('final-message');
+            let message = '';
+            let bgColor = '';
+
+            if (accuracy > 80) {
+                message = '¡Felicidades! Su dominio de los criterios CREMAA es <strong>Alto</strong>. Usted puede analizar la calidad de un indicador de manera rápida y precisa.';
+                bgColor = '#e9f7ec';
+            } else if (accuracy >= 60) {
+                const worstDim = Object.keys(dimensionScores).reduce((a, b) => dimensionScores[a] < dimensionScores[b] ? a : b);
+                message = `Bien hecho. Su dominio es <strong>Intermedio</strong>. Revise especialmente las dimensiones de <strong>${worstDim}</strong> para mejorar su análisis.`;
+                bgColor = '#fff8e1';
+            } else {
+                message = 'Su dominio está en desarrollo. Le recomendamos revisar el material y enfocarse en distinguir entre <strong>actividades</strong> (NO Relevantes) y <strong>resultados</strong> (SÍ Relevantes).';
+                bgColor = '#fdecea';
+            }
+            finalMessageEl.innerHTML = message;
+            finalMessageEl.style.backgroundColor = bgColor;
+        }
+
+        function restartQuiz() {
+            resultsScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+            progressBar.style.width = '0%';
+        }
+    </script>
+</body>
+</html>
