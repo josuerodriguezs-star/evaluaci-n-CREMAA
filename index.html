@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detector CREMAA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #FF5900; /* Naranja Anáhuac */
@@ -11,13 +14,13 @@
             --correct-color: #28a745;
             --incorrect-color: #dc3545;
             --light-text: #ffffff;
-            --dark-text: #6B3F23; /* Café Anáhuac */
+            --dark-text: #000000; /* Texto Negro */
             --border-radius: 8px;
             --box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--secondary-color);
             color: var(--dark-text);
             margin: 0;
@@ -134,7 +137,7 @@
             margin: 0 0 30px 0;
             font-size: 1.1em;
             font-weight: bold;
-            color: #343a40;
+            color: var(--dark-text);
             border-radius: 0 var(--border-radius) var(--border-radius) 0;
         }
 
@@ -259,7 +262,7 @@
             <!-- Pantalla de Inicio -->
             <div id="start-screen">
                 <h2>¡Bienvenido al Detector CREMAA!</h2>
-                <p>A continuación, evaluará 30 indicadores. Su tarea es determinar si el indicador cumple con los <strong>criterios mínimos de calidad CREMAA</strong> (Claridad, Relevancia, Economía, Monitoreable, Aportación Marginal, Adecuado).</p>
+                <p>A continuación, evaluará <strong>10 indicadores aleatorios</strong>. Su tarea es determinar si el indicador cumple con los <strong>criterios mínimos de calidad CREMAA</strong>.</p>
                 <p>Seleccione <strong>SÍ</strong> o <strong>NO</strong> para cada pregunta. Después de responder, recibirá retroalimentación inmediata.</p>
                 <button class="button" id="start-btn">Comenzar Evaluación</button>
             </div>
@@ -343,7 +346,7 @@
     </div>
 
     <script>
-        const questions = [
+        const allQuestions = [
             { id: 1, indicator: "Porcentaje de promotores comunitarios capacitados sobre prevención de dengue, con base en asistencia registrada.", correctAnswer: 'SÍ', dimension: 'General', feedback: "CORRECTO. El indicador es medible con registros de asistencia, claro, relevante y útil para monitorear el proceso." },
             { id: 2, indicator: "Número de folletos impresos sobre enfermedades transmitidas por vector.", correctAnswer: 'NO', dimension: 'Relevancia y Aportación Marginal', feedback: "CORRECTO. Mide un producto (folletos) y no refleja una acción significativa o resultado en la comunidad. Le falta relevancia y aportación sustantiva." },
             { id: 3, indicator: "Porcentaje de personas que consideran que su comunidad es más saludable desde hace un año.", correctAnswer: 'NO', dimension: 'Claridad y Adecuación', feedback: "CORRECTO. Es ambiguo (‘más saludable’ no está claramente definido) y difícil de medir de manera objetiva (falta de claridad y monitoreabilidad)." },
@@ -395,6 +398,7 @@
         const feedbackTitleEl = document.getElementById('feedback-title');
         const feedbackTextEl = document.getElementById('feedback-text');
 
+        let quizQuestions = [];
         let currentQuestionIndex = 0;
         let userAnswers = [];
         let timerInterval;
@@ -407,10 +411,22 @@
         restartBtn.addEventListener('click', restartQuiz);
         nextQuestionBtn.addEventListener('click', nextQuestion);
 
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function startQuiz() {
             currentQuestionIndex = 0;
             userAnswers = [];
             totalTime = 0;
+            
+            const shuffledQuestions = shuffleArray([...allQuestions]);
+            quizQuestions = shuffledQuestions.slice(0, 10);
+
             startScreen.style.display = 'none';
             resultsScreen.style.display = 'none';
             quizScreen.style.display = 'block';
@@ -419,10 +435,10 @@
 
         function showQuestion() {
             clearInterval(timerInterval);
-            const question = questions[currentQuestionIndex];
-            questionCounterEl.textContent = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            const question = quizQuestions[currentQuestionIndex];
+            questionCounterEl.textContent = `Pregunta ${currentQuestionIndex + 1} de ${quizQuestions.length}`;
             indicatorTextEl.textContent = question.indicator;
-            progressBar.style.width = `${((currentQuestionIndex) / questions.length) * 100}%`;
+            progressBar.style.width = `${((currentQuestionIndex) / quizQuestions.length) * 100}%`;
             
             let timeLeft = 30;
             timerEl.textContent = `${timeLeft}s`;
@@ -453,7 +469,7 @@
             yesBtn.disabled = true;
             noBtn.disabled = true;
 
-            const question = questions[currentQuestionIndex];
+            const question = quizQuestions[currentQuestionIndex];
             const isCorrect = answer === question.correctAnswer;
 
             userAnswers.push({
@@ -488,7 +504,7 @@
             feedbackModal.style.display = 'none';
             currentQuestionIndex++;
 
-            if (currentQuestionIndex < questions.length) {
+            if (currentQuestionIndex < quizQuestions.length) {
                 showQuestion();
             } else {
                 showResults();
@@ -501,26 +517,26 @@
             resultsScreen.style.display = 'block';
 
             const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-            const accuracy = (correctAnswers / questions.length) * 100;
-            const avgTime = totalTime / questions.length;
+            const accuracy = quizQuestions.length > 0 ? (correctAnswers / quizQuestions.length) * 100 : 0;
+            const avgTime = quizQuestions.length > 0 ? totalTime / quizQuestions.length : 0;
 
-            document.getElementById('accuracy').textContent = `${accuracy.toFixed(1)}% (${correctAnswers}/${questions.length})`;
+            document.getElementById('accuracy').textContent = `${accuracy.toFixed(1)}% (${correctAnswers}/${quizQuestions.length})`;
             document.getElementById('avg-time').textContent = `${avgTime.toFixed(1)} segundos`;
 
             const dimensions = ['Claridad y Adecuación', 'Relevancia y Aportación Marginal', 'Monitoreable y Economía'];
             const dimensionScores = {};
 
             dimensions.forEach(dim => {
-                const dimQuestions = questions.filter(q => q.dimension === dim);
-                const dimAnswers = userAnswers.filter(a => a.dimension === dim);
-                const correctDimAnswers = dimAnswers.filter(a => a.isCorrect).length;
-                const score = dimQuestions.length > 0 ? (correctDimAnswers / dimQuestions.length) * 100 : 100;
-                dimensionScores[dim] = score;
+                const dimQuestions = userAnswers.filter(a => a.dimension === dim);
+                if (dimQuestions.length > 0) {
+                    const correctDimAnswers = dimQuestions.filter(a => a.isCorrect).length;
+                    const score = (correctDimAnswers / dimQuestions.length) * 100;
+                    dimensionScores[dim] = score;
+                    document.getElementById(`${dim.toLowerCase().split(' ')[0]}-score`).textContent = `${score.toFixed(1)}%`;
+                } else {
+                    document.getElementById(`${dim.toLowerCase().split(' ')[0]}-score`).textContent = 'N/A';
+                }
             });
-
-            document.getElementById('clarity-score').textContent = `${dimensionScores['Claridad y Adecuación'].toFixed(1)}%`;
-            document.getElementById('relevance-score').textContent = `${dimensionScores['Relevancia y Aportación Marginal'].toFixed(1)}%`;
-            document.getElementById('monitoring-score').textContent = `${dimensionScores['Monitoreable y Economía'].toFixed(1)}%`;
 
             const finalMessageEl = document.getElementById('final-message');
             let message = '';
